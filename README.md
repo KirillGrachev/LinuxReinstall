@@ -1,4 +1,4 @@
-# linux-reinstall
+# LinuxReinstall
 
 One-script Linux reinstall from a rescue or live environment: wipe the target
 disk, bootstrap the chosen distro family into it, carry the network over,
@@ -79,8 +79,8 @@ CI runs shellcheck plus the suites on ubuntu-24.04.
 - amd64 only; arm64 mirrors and grub targets are a follow-up.
 - One interface with the default route is carried over; bonding and vlans
   are configured after boot.
-- Image-write installs (Talos, RouterOS, Windows) are phase 2: they dd a
-  prepared image instead of bootstrapping packages.
+- Image-write installs (Talos, RouterOS) are phase 2: they dd a prepared
+  image instead of bootstrapping packages. Windows is out of scope by design.
 
 ## License
 

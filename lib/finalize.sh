@@ -76,7 +76,7 @@ finalize_bootloader() {
     esac
     if [[ "$mode" == "efi" ]]; then
         run_exec finalize chroot "$target" "$grub" --target=x86_64-efi \
-            --efi-directory=/boot/efi --bootloader-id=linux-reinstall
+            --efi-directory=/boot/efi --bootloader-id=LinuxReinstall
     else
         run_exec finalize chroot "$target" "$grub" --target=i386-pc "$disk"
     fi

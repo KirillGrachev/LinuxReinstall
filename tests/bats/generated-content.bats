@@ -39,7 +39,7 @@ teardown() { rm -rf "$LRI_TMP"; }
         > "$LRI_TMP/sshd_config.d/00-LinuxReinstall.conf"
     run sshd -T -f "$LRI_TMP/sshd_config"
     [ "$status" -eq 0 ]
-    grep -q "^permitrootlogin prohibit-password$" <<< "$output"
+    grep -q "^permitrootlogin without-password$" <<< "$output"  # sshd -T canonicalizes prohibit-password
     grep -q "^passwordauthentication no$" <<< "$output"
     grep -q "^pubkeyauthentication yes$" <<< "$output"
 }

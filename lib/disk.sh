@@ -113,6 +113,7 @@ disk_mount_target() {
     fi
     # chroot-финализации (grub-install, systemd-firstboot) нужны устройства
     # и виртуальные ФС цели: без bind-mount grub не увидит диск.
+    run_exec disk mkdir -p "$target/dev" "$target/proc" "$target/sys" || return 1
     run_exec disk mount --bind /dev "$target/dev" || return 1
     run_exec disk mount --bind /proc "$target/proc" || return 1
     run_exec disk mount --bind /sys "$target/sys" || return 1

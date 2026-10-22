@@ -30,7 +30,7 @@ teardown() { rm -rf "$LRI_TMP"; }
     bootstrap_run "$LRI_CAT_FAMILY" /mnt/target
     grep -q -- "--installroot=/mnt/target" "$LRI_TMP/journal.tsv"
     grep -q -- "--releasever=9" "$LRI_TMP/journal.tsv"
-    grep -q " kernel$" "$LRI_TMP/journal.tsv"
+    grep -q "efi-filesystem kernel" "$LRI_TMP/journal.tsv"
 }
 
 @test "zypper backend adds the repo before installing" {

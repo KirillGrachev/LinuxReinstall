@@ -81,6 +81,11 @@ guard_family_tools() {
     if command -v "$tool" >/dev/null 2>&1; then
         return 0
     fi
+    if (( LRI_DRY_RUN )); then
+        log_warn "Bootstrap tool '$tool' is missing (package: $pkg); dry-run continues."
+        log_journal guard tool-missing "$tool" "dry-run"
+        return 0
+    fi
     log_error "Bootstrap tool '$tool' is missing on this host (package: $pkg)."
     log_error "Cross-family installs need the tool plus its repo config; the reliable path is a rescue of the same family."
     return 2

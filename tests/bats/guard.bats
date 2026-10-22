@@ -82,7 +82,8 @@ teardown() { rm -rf "$LRI_TMP"; }
 }
 
 @test "preflight refuses a family whose bootstrap tool is missing" {
-    run env PATH=/nonexistent bash -c "source $LRI_ROOT/lib/log.sh; source $LRI_ROOT/lib/guard.sh; log_init /dev/null 0; guard_family_tools dnf"
+    mkdir -p "$LRI_TMP/empty"
+    run env PATH="$LRI_TMP/empty" /bin/bash -c "source $LRI_ROOT/lib/log.sh; source $LRI_ROOT/lib/guard.sh; log_init /dev/null 0; guard_family_tools dnf"
     [ "$status" -eq 2 ]
     [[ "$output" == *"Bootstrap tool 'dnf' is missing"* ]]
 }

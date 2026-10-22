@@ -32,3 +32,18 @@ run_write_file() {
     log_journal "$category" write "$path" "$(wc -c <<<"$content") bytes"
     printf "%s" "$content" > "$path"
 }
+
+# Команда, читающая stdin из файла: в dry-run исполнять нечего, но точная
+# командная строка обязана попасть в журнал, иначе план непроверяем.
+run_exec_stdin() {
+    local category="$1" stdin_file="$2"; shift 2
+    local pretty="$* < $stdin_file"
+    if (( LRI_DRY_RUN )); then
+        log_journal "$category" exec "$pretty" "dry-run"
+        log_debug "dry-run: $pretty"
+        return 0
+    fi
+    log_journal "$category" exec "$pretty" "real"
+    log_info "exec: $pretty"
+    "$@" < "$stdin_file"
+}

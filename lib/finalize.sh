@@ -1,0 +1,84 @@
+#!/usr/bin/env bash
+#
+# SYNOPSIS
+#     Chroot-финализация целевой системы после бутстрапа.
+#
+# DESCRIPTION
+#     fstab по UUID, hostname, часовой пояс и локаль, sshd с ключом оператора
+#     и загрузчик. Всё через run_exec/run_write_file, поэтому dry-run
+#     journallит каждый шаг, не трогая целевую систему.
+
+finalize_fstab() {
+    local target="$1" disk="$2" mode="$3" swap_mb="$4"
+    local nums boot_n swap_n root_n root_uuid esp_uuid swap_uuid content
+    nums="$(disk_part_numbers "$swap_mb")"
+    read -r boot_n swap_n root_n <<< "$nums"
+    if (( LRI_DRY_RUN )); then
+        root_uuid=DRYRUN-ROOT; esp_uuid=DRYRUN-ESP; swap_uuid=DRYRUN-SWAP
+    else
+        root_uuid="$(blkid -s UUID -o value "$(disk_part_name "$disk" "$root_n")")"
+        esp_uuid="$(blkid -s UUID -o value "$(disk_part_name "$disk" "$boot_n")")"
+        swap_uuid="$(blkid -s UUID -o value "$(disk_part_name "$disk" "$swap_n")")"
+    fi
+    content="UUID=$root_uuid / ext4 defaults 0 1
+"
+    if [[ "$mode" == "efi" ]]; then
+        content+="UUID=$esp_uuid /boot/efi vfat umask=0077 0 2
+"
+    fi
+    if [[ "$swap_n" != "-" ]]; then
+        content+="UUID=$swap_uuid none swap sw 0 0
+"
+    fi
+    run_write_file finalize "$target/etc/fstab" "$content"
+}
+
+finalize_hostname() {
+    local target="$1" name="$2"
+    run_write_file finalize "$target/etc/hostname" "$name
+"
+    run_write_file finalize "$target/etc/hosts" "127.0.0.1 localhost
+127.0.1.1 $name
+"
+}
+
+finalize_locale_tz() {
+    local target="$1" family="$2" tz="$3"
+    if [[ "$family" == "apk" ]]; then
+        run_write_file finalize "$target/etc/timezone" "$tz
+"
+        run_exec finalize chroot "$target" ln -sf "/usr/share/zoneinfo/$tz" /etc/localtime
+        return 0
+    fi
+    run_exec finalize chroot "$target" systemd-firstboot --force --timezone="$tz" --locale=C.UTF-8
+}
+
+finalize_sshd() {
+    local target="$1" key="$2"
+    run_exec finalize mkdir -p "$target/root/.ssh"
+    run_write_file finalize "$target/root/.ssh/authorized_keys" "$key
+"
+    run_exec finalize chmod 700 "$target/root/.ssh"
+    run_exec finalize chmod 600 "$target/root/.ssh/authorized_keys"
+    run_write_file finalize "$target/etc/ssh/sshd_config.d/00-linux-reinstall.conf" \
+        "PermitRootLogin prohibit-password
+PasswordAuthentication no
+PubkeyAuthentication yes
+"
+}
+
+finalize_bootloader() {
+    local target="$1" disk="$2" mode="$3" family="$4"
+    local grub grubmk conf
+    case "$family" in
+        dnf|zypper) grub="grub2-install"; grubmk="grub2-mkconfig"; conf="/boot/grub2/grub.cfg" ;;
+        *)          grub="grub-install";  grubmk="grub-mkconfig";  conf="/boot/grub/grub.cfg" ;;
+    esac
+    if [[ "$mode" == "efi" ]]; then
+        run_exec finalize chroot "$target" "$grub" --target=x86_64-efi \
+            --efi-directory=/boot/efi --bootloader-id=linux-reinstall
+    else
+        run_exec finalize chroot "$target" "$grub" --target=i386-pc "$disk"
+    fi
+    run_exec finalize chroot "$target" "$grubmk" -o "$conf"
+}

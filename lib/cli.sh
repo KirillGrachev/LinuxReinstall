@@ -138,6 +138,10 @@ cli_validate() {
         auto|efi|bios) ;;
         *) printf 'Invalid --boot value: %s (expected auto, efi or bios)\n' "$LRI_BOOT" >&2; return 2 ;;
     esac
+    if (( ! LRI_DRY_RUN )) && [[ -z "$LRI_SSH_KEY" && -z "$LRI_SSH_KEY_FILE" ]]; then
+        printf 'A real run needs an SSH key: pass --ssh-key or --ssh-key-file\n' >&2
+        return 2
+    fi
     if ! [[ "$LRI_SWAP_MB" =~ ^[0-9]+$ ]]; then
         printf 'Invalid --swap value: %s (expected MiB as a number)\n' "$LRI_SWAP_MB" >&2
         return 2

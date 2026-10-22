@@ -74,3 +74,13 @@ teardown() { rm -rf "$LRI_TMP"; }
         done <<< "$output"
     done
 }
+
+@test "dry-run apply journals partx between sfdisk and mkfs" {
+    disk_apply /dev/sdc bios 0 "$LRI_TMP/sfdisk.txt"
+    local sfd partx mkfs
+    sfd=$(grep -n "sfdisk --force /dev/sdc" "$LRI_TMP/journal.tsv" | cut -d: -f1)
+    partx=$(grep -n "partx --update /dev/sdc" "$LRI_TMP/journal.tsv" | cut -d: -f1)
+    mkfs=$(grep -n "mkfs.ext4 -F /dev/sdc2" "$LRI_TMP/journal.tsv" | cut -d: -f1)
+    [ -n "$sfd" ] && [ -n "$partx" ] && [ -n "$mkfs" ]
+    [ "$sfd" -lt "$partx" ] && [ "$partx" -lt "$mkfs" ]
+}

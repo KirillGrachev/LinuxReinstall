@@ -64,6 +64,9 @@ disk_apply() {
     run_exec disk wipefs -a "$disk" || return 1
     run_write_file disk "$script" "$(disk_render_sfdisk "$mode" "$swap_mb")"
     run_exec_stdin disk "$script" sfdisk --force "$disk" || return 1
+    # На loop-устройствах и занятых дисках ядро может отложить перечитывание
+    # таблицы: partx заставляет его увидеть разделы до mkfs.
+    run_exec disk partx --update "$disk" || return 1
     if [[ "$mode" == "efi" ]]; then
         run_exec disk mkfs.vfat -F32 "$(disk_part_name "$disk" "$boot_n")" || return 1
     fi

@@ -82,26 +82,29 @@ disk_apply() {
 # На системах с udev узлы уже есть и функция ничего не делает.
 disk_ensure_part_nodes() {
     local disk="$1"; shift
-    local num name base sys devno maj min
+    local num name base sys devno maj min cur_maj cur_min line
     for num in "$@"; do
         [[ -n "$num" && "$num" != "-" ]] || continue
         name="$(disk_part_name "$disk" "$num")"
         base="${name##*/}"
-        sys="/sys/class/block/$base/dev"
-        if [[ ! -r "$sys" ]]; then
-            if [[ -e "$name" ]]; then
-                log_warn "Partition node $name exists but sysfs has no entry; leaving it alone."
-            else
-                log_warn "Partition node $name is missing and sysfs has no entry; skipping."
+        # partx читает таблицу ядра ioctl-ом и синхронен; sysfs наполняется
+        # асинхронно, поэтому берём major:minor из partx, а sysfs лишь запас.
+        line="$(partx --raw --print "$disk" 2>/dev/null | awk -v b="$base" '$4 == b {print $1, $2; exit}')"
+        if [[ -z "$line" ]]; then
+            sys="/sys/class/block/$base/dev"
+            if [[ -r "$sys" ]]; then
+                devno="$(cat "$sys")"
+                line="${devno%%:*} ${devno##*:}"
             fi
+        fi
+        if [[ -z "$line" ]]; then
+            log_warn "Partition node $name is missing and no source reports it; skipping."
             continue
         fi
-        devno="$(cat "$sys")"
-        maj="${devno%%:*}"
-        min="${devno##*:}"
+        read -r maj min <<< "$line"
         if [[ -e "$name" ]]; then
             # Узел мог остаться от прошлой разметки с другими номерами:
-            # сверяем major:minor с sysfs и пересоздаём при расхождении.
+            # сверяем major:minor и пересоздаём при расхождении.
             cur_maj="$(( 0x$(stat -c %t "$name") ))"
             cur_min="$(( 0x$(stat -c %T "$name") ))"
             if (( cur_maj == maj && cur_min == min )); then

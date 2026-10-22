@@ -28,9 +28,9 @@ source "$LRI_ROOT/lib/catalog.sh"
 @test "no tabs in indentation, no CRLF, no BOM" {
     local f
     while IFS= read -r f; do
-        grep -qP '^\t' "$f" && { echo "tab indent: $f"; return 1; }
-        grep -qU $'\r' "$f" && { echo "CRLF: $f"; return 1; }
-        head -c 3 "$f" | grep -q $'\xef\xbb\xbf' && { echo "BOM: $f"; return 1; }
+        if grep -qP '^\t' "$f"; then echo "tab indent: $f"; return 1; fi
+        if grep -qU $'\r' "$f"; then echo "CRLF: $f"; return 1; fi
+        if head -c 3 "$f" | grep -q $'\xef\xbb\xbf'; then echo "BOM: $f"; return 1; fi
     done < <(git -C "$LRI_ROOT" ls-files)
 }
 

@@ -44,3 +44,14 @@ teardown() { rm -rf "$LRI_TMP"; }
     [ "$status" -eq 0 ]
     grep -q "pve.list" "$JOURNAL"
 }
+
+@test "dry-run binds proc after the bootstrap, not before" {
+    run "$LRI_ROOT/reinstall.sh" --distro debian-12 --disk "$LRI_TMP/fake.img" \
+        --dry-run --yes --ssh-key "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAITESTKEYAAAA dry-run@test"
+    [ "$status" -eq 0 ]
+    local bootstrap procbind
+    bootstrap=$(grep -n "debootstrap --arch=amd64" "$JOURNAL" | head -1 | cut -d: -f1)
+    procbind=$(grep -n "mount --bind /proc /mnt/lri-target/proc" "$JOURNAL" | head -1 | cut -d: -f1)
+    [ -n "$bootstrap" ] && [ -n "$procbind" ]
+    [ "$bootstrap" -lt "$procbind" ]
+}

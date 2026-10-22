@@ -125,13 +125,19 @@ disk_mount_target() {
         run_exec disk mkdir -p "$target/boot/efi"
         run_exec disk mount "$(disk_part_name "$disk" "$boot_n")" "$target/boot/efi" || return 1
     fi
-    # chroot-финализации (grub-install, systemd-firstboot) нужны устройства
-    # и виртуальные ФС цели: без bind-mount grub не увидит диск.
-    run_exec disk mkdir -p "$target/dev" "$target/proc" "$target/sys" || return 1
+    # debootstrap needs a usable /dev in the target and manages /proc and
+    # /dev/pts on its own; pre-binding them breaks its second-stage cleanup.
+    run_exec disk mkdir -p "$target/dev" || return 1
     run_exec disk mount --bind /dev "$target/dev" || return 1
-    # debootstrap second stage needs a working /dev/pts and ptmx inside the target.
-    run_exec disk mkdir -p "$target/dev/pts" || return 1
-    run_exec disk mount -t devpts devpts "$target/dev/pts" || return 1
+}
+
+# После бутстрапа chroot-финализации (grub-install, systemd-firstboot) нужны
+# proc, sys и pts: монтируем их отдельным шагом, когда debootstrap уже сам
+# разобрался со своими точками монтирования.
+disk_bind_for_chroot() {
+    local target="$1"
+    run_exec disk mkdir -p "$target/proc" "$target/sys" "$target/dev/pts" || return 1
     run_exec disk mount --bind /proc "$target/proc" || return 1
     run_exec disk mount --bind /sys "$target/sys" || return 1
+    run_exec disk mount -t devpts devpts "$target/dev/pts" || return 1
 }

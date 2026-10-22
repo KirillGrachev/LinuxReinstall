@@ -55,6 +55,7 @@ pipeline_run() {
     disk_apply "$LRI_DISK" "$mode" "$LRI_SWAP_MB" /tmp/lri-sfdisk.txt || exit 1
     disk_mount_target "$LRI_DISK" "$mode" "$LRI_SWAP_MB" "$target" || exit 1
     bootstrap_run "$LRI_CAT_FAMILY" "$target" || exit 1
+    disk_bind_for_chroot "$target" || exit 1
     net_apply "$target" "$LRI_CAT_FAMILY" || exit 1
     finalize_fstab "$target" "$LRI_DISK" "$mode" "$LRI_SWAP_MB" || exit 1
     finalize_hostname "$target" "${LRI_HOSTNAME:-$(hostname)}" || exit 1

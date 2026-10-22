@@ -43,7 +43,7 @@ disk_render_sfdisk() {
     if (( swap_mb > 0 )); then
         printf "size=%sMiB, type=0657FD6D-A4AB-44C4-84E5-0933C84B4F4F, name=swap\n" "$swap_mb"
     fi
-    printf ", type=0FC63DAF-8483-4772-8E79-3D69D8477DE4, name=root\n"
+    printf "type=0FC63DAF-8483-4772-8E79-3D69D8477DE4, name=root\n"
 }
 
 # Номера разделов: boot swap root; swap=0 даёт пустое поле swap.

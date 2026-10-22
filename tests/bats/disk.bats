@@ -64,3 +64,13 @@ teardown() { rm -rf "$LRI_TMP"; }
     grep -q "mount /dev/sdc2 /mnt/target" "$LRI_TMP/journal.tsv"
     grep -q "mount /dev/sdc1 /mnt/target/boot/efi" "$LRI_TMP/journal.tsv"
 }
+
+@test "no sfdisk line starts with a comma" {
+    for args in "efi 0" "efi 2048" "bios 0" "bios 1024"; do
+        run bash -c "source $LRI_ROOT/lib/disk.sh; disk_render_sfdisk $args"
+        [ "$status" -eq 0 ]
+        while IFS= read -r line; do
+            [[ "$line" != ,* ]]
+        done <<< "$output"
+    done
+}

@@ -67,6 +67,7 @@ disk_apply() {
     # На loop-устройствах и занятых дисках ядро может отложить перечитывание
     # таблицы: partx заставляет его увидеть разделы до mkfs.
     run_exec disk partx --update "$disk" || return 1
+    disk_ensure_part_nodes "$disk" "$boot_n" "$swap_n" "$root_n"
     if [[ "$mode" == "efi" ]]; then
         run_exec disk mkfs.vfat -F32 "$(disk_part_name "$disk" "$boot_n")" || return 1
     fi
@@ -74,6 +75,29 @@ disk_apply() {
         run_exec disk mkswap "$(disk_part_name "$disk" "$swap_n")" || return 1
     fi
     run_exec disk mkfs.ext4 -F "$(disk_part_name "$disk" "$root_n")" || return 1
+}
+
+# Без udev (контейнеры, минимальные rescue) ядро знает о разделах, но узлы
+# в /dev никто не создаёт: дочитываем major:minor из sysfs и mknod-им.
+# На системах с udev узлы уже есть и функция ничего не делает.
+disk_ensure_part_nodes() {
+    local disk="$1"; shift
+    local num name base sys devno maj min
+    for num in "$@"; do
+        [[ -n "$num" && "$num" != "-" ]] || continue
+        name="$(disk_part_name "$disk" "$num")"
+        [[ -e "$name" ]] && continue
+        base="${name##*/}"
+        sys="/sys/class/block/$base/dev"
+        if [[ ! -r "$sys" ]]; then
+            log_warn "Partition node $name is missing and sysfs has no entry; skipping."
+            continue
+        fi
+        devno="$(cat "$sys")"
+        maj="${devno%%:*}"
+        min="${devno##*:}"
+        run_exec disk mknod -b "$name" "$maj" "$min"
+    done
 }
 
 disk_mount_target() {

@@ -84,3 +84,9 @@ teardown() { rm -rf "$LRI_TMP"; }
     [ -n "$sfd" ] && [ -n "$partx" ] && [ -n "$mkfs" ]
     [ "$sfd" -lt "$partx" ] && [ "$partx" -lt "$mkfs" ]
 }
+
+@test "ensure-part-nodes warns and continues when sysfs has no entry" {
+    run disk_ensure_part_nodes /dev/loopZZ 1
+    [ "$status" -eq 0 ]
+    [[ "$output" == *"skipping"* ]]
+}

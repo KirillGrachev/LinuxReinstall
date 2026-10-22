@@ -67,6 +67,7 @@ disk_apply() {
     # На loop-устройствах и занятых дисках ядро может отложить перечитывание
     # таблицы: partx заставляет его увидеть разделы до mkfs.
     run_exec disk partx --update "$disk" || return 1
+    disk_wait_partitions "$disk" "$boot_n" "$swap_n" "$root_n"
     disk_ensure_part_nodes "$disk" "$boot_n" "$swap_n" "$root_n"
     if [[ "$mode" == "efi" ]]; then
         run_exec disk mkfs.vfat -F32 "$(disk_part_name "$disk" "$boot_n")" || return 1
@@ -115,6 +116,27 @@ disk_ensure_part_nodes() {
         fi
         run_exec disk mknod "$name" b "$maj" "$min" || return 1
     done
+}
+
+# Перечитывание таблицы разделов на loop-устройствах асинхронно: сразу
+# после sfdisk ядро может видеть лишь часть разделов. Ждём, пока partx
+# покажет все ожидаемые, иначе mkfs получит отсутствующие узлы.
+disk_wait_partitions() {
+    local disk="$1"; shift
+    (( LRI_DRY_RUN )) && return 0
+    local expected=0 num have attempt
+    for num in "$@"; do
+        [[ -n "$num" && "$num" != "-" ]] && expected=$(( expected + 1 ))
+    done
+    local attempt=0
+    while (( attempt < 15 )); do
+        have="$(partx --raw --print "$disk" 2>/dev/null | wc -l)"
+        (( have >= expected )) && return 0
+        attempt=$(( attempt + 1 ))
+        sleep 0.4
+    done
+    log_warn "Partition table on $disk reports $have of $expected after waiting; continuing anyway."
+    return 0
 }
 
 # Без udev (контейнеры, минимальные rescue) нет ссылок /dev/disk/by-uuid,

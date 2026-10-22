@@ -85,6 +85,10 @@ finalize_bootloader() {
     if [[ "$mode" == "efi" ]]; then
         run_exec finalize chroot "$target" "$grub" --target=x86_64-efi \
             --efi-directory=/boot/efi --bootloader-id=LinuxReinstall
+        # Fallback path for machines whose NVRAM does not keep the entry:
+        # fresh boards, reset firmware, images moved between hosts.
+        run_exec finalize chroot "$target" "$grub" --target=x86_64-efi \
+            --efi-directory=/boot/efi --bootloader-id=LinuxReinstall --removable
     else
         run_exec finalize chroot "$target" "$grub" --target=i386-pc "$disk"
     fi

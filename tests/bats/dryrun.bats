@@ -55,3 +55,9 @@ teardown() { rm -rf "$LRI_TMP"; }
     [ -n "$bootstrap" ] && [ -n "$procbind" ]
     [ "$bootstrap" -lt "$procbind" ]
 }
+
+@test "efi dry-run journals the removable fallback bootloader install" {
+    run "$LRI_ROOT/reinstall.sh" --distro debian-12 --disk "$LRI_TMP/fake.img"         --dry-run --yes --boot efi --ssh-key "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAITESTKEYAAAA efi@test"
+    [ "$status" -eq 0 ]
+    grep -q -- "--removable" "$JOURNAL"
+}

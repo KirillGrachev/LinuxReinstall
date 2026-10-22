@@ -60,7 +60,7 @@ finalize_sshd() {
 "
     run_exec finalize chmod 700 "$target/root/.ssh"
     run_exec finalize chmod 600 "$target/root/.ssh/authorized_keys"
-    run_write_file finalize "$target/etc/ssh/sshd_config.d/00-linux-reinstall.conf" \
+    run_write_file finalize "$target/etc/ssh/sshd_config.d/00-LinuxReinstall.conf" \
         "PermitRootLogin prohibit-password
 PasswordAuthentication no
 PubkeyAuthentication yes

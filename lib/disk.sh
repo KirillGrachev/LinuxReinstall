@@ -84,4 +84,9 @@ disk_mount_target() {
         run_exec disk mkdir -p "$target/boot/efi"
         run_exec disk mount "$(disk_part_name "$disk" "$boot_n")" "$target/boot/efi" || return 1
     fi
+    # chroot-финализации (grub-install, systemd-firstboot) нужны устройства
+    # и виртуальные ФС цели: без bind-mount grub не увидит диск.
+    run_exec disk mount --bind /dev "$target/dev" || return 1
+    run_exec disk mount --bind /proc "$target/proc" || return 1
+    run_exec disk mount --bind /sys "$target/sys" || return 1
 }

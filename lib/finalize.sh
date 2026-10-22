@@ -8,19 +8,11 @@
 #     и загрузчик. Всё через run_exec/run_write_file, поэтому dry-run
 #     journallит каждый шаг, не трогая целевую систему.
 
-finalize_fstab() {
-    local target="$1" disk="$2" mode="$3" swap_mb="$4"
-    local nums boot_n swap_n root_n root_uuid esp_uuid swap_uuid content
-    nums="$(disk_part_numbers "$swap_mb")"
-    read -r boot_n swap_n root_n <<< "$nums"
-    if (( LRI_DRY_RUN )); then
-        root_uuid=DRYRUN-ROOT; esp_uuid=DRYRUN-ESP; swap_uuid=DRYRUN-SWAP
-    else
-        root_uuid="$(blkid -s UUID -o value "$(disk_part_name "$disk" "$root_n")")"
-        esp_uuid="$(blkid -s UUID -o value "$(disk_part_name "$disk" "$boot_n")")"
-        swap_uuid="$(blkid -s UUID -o value "$(disk_part_name "$disk" "$swap_n")")"
-    fi
-    content="UUID=$root_uuid / ext4 defaults 0 1
+# Чистый рендер fstab: тесты гоняют вывод через структурные проверки
+# без устройств и uuid из blkid.
+finalize_render_fstab() {
+    local root_uuid="$1" esp_uuid="$2" swap_uuid="$3" mode="$4" swap_n="$5"
+    local content="UUID=$root_uuid / ext4 defaults 0 1
 "
     if [[ "$mode" == "efi" ]]; then
         content+="UUID=$esp_uuid /boot/efi vfat umask=0077 0 2
@@ -30,7 +22,23 @@ finalize_fstab() {
         content+="UUID=$swap_uuid none swap sw 0 0
 "
     fi
-    run_write_file finalize "$target/etc/fstab" "$content"
+    printf "%s" "$content"
+}
+
+finalize_fstab() {
+    local target="$1" disk="$2" mode="$3" swap_mb="$4"
+    local nums boot_n swap_n root_n root_uuid esp_uuid swap_uuid
+    nums="$(disk_part_numbers "$swap_mb")"
+    read -r boot_n swap_n root_n <<< "$nums"
+    if (( LRI_DRY_RUN )); then
+        root_uuid=DRYRUN-ROOT; esp_uuid=DRYRUN-ESP; swap_uuid=DRYRUN-SWAP
+    else
+        root_uuid="$(blkid -s UUID -o value "$(disk_part_name "$disk" "$root_n")")"
+        esp_uuid="$(blkid -s UUID -o value "$(disk_part_name "$disk" "$boot_n")")"
+        swap_uuid="$(blkid -s UUID -o value "$(disk_part_name "$disk" "$swap_n")")"
+    fi
+    run_write_file finalize "$target/etc/fstab" \
+        "$(finalize_render_fstab "$root_uuid" "$esp_uuid" "$swap_uuid" "$mode" "$swap_n")"
 }
 
 finalize_hostname() {

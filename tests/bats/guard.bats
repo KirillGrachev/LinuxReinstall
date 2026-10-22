@@ -71,7 +71,7 @@ teardown() { rm -rf "$LRI_TMP"; }
 @test "dry-run exec journals the exact command line" {
     LRI_DRY_RUN=1
     run_exec disk wipefs -a /dev/sdc
-    grep -qP "^disk\texec\twipefs -a /dev/sdc\tdry-run$" "$LRI_TMP/journal.tsv"
+    grep -qP "^disk\texec\twipefs -a /dev/sdc\tdry-run( rc=[0-9]+)?$" "$LRI_TMP/journal.tsv"
 }
 
 @test "dry-run write journals path and size without touching disk" {

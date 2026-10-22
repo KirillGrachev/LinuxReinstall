@@ -75,6 +75,15 @@ PubkeyAuthentication yes
 "
 }
 
+# busybox init не поднимает getty на serial сам: добавляем строку в inittab,
+# иначе консоль ttyS0, обещанная cmdline, останется без логина.
+finalize_serial_getty() {
+    local target="$1" family="$2"
+    [[ "$family" == "apk" ]] || return 0
+    run_exec finalize chroot "$target" sh -c \
+        "grep -q '^ttyS0::' /etc/inittab || printf 'ttyS0::/sbin/getty -L 115200 ttyS0 vt100\n' >> /etc/inittab"
+}
+
 finalize_bootloader() {
     local target="$1" disk="$2" mode="$3" family="$4"
     local grub grubmk conf

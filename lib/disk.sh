@@ -115,6 +115,9 @@ disk_mount_target() {
     # и виртуальные ФС цели: без bind-mount grub не увидит диск.
     run_exec disk mkdir -p "$target/dev" "$target/proc" "$target/sys" || return 1
     run_exec disk mount --bind /dev "$target/dev" || return 1
+    # debootstrap second stage needs a working /dev/pts and ptmx inside the target.
+    run_exec disk mkdir -p "$target/dev/pts" || return 1
+    run_exec disk mount -t devpts devpts "$target/dev/pts" || return 1
     run_exec disk mount --bind /proc "$target/proc" || return 1
     run_exec disk mount --bind /sys "$target/sys" || return 1
 }

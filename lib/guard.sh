@@ -62,6 +62,30 @@ guard_confirm() {
     return 0
 }
 
+# Инструмент бутстрапа обязан существовать в rescue-окружении ДО старта:
+# упасть на dnf: command not found посреди разметки хуже, чем отказаться
+# сразу. Для кросс-семейных запусков подсказываем пакет или родной rescue.
+guard_family_tools() {
+    local family="$1" tool pkg
+    case "$family" in
+        debootstrap|proxmox) tool=debootstrap; pkg=debootstrap ;;
+        dnf)    tool=dnf;     pkg=dnf ;;
+        zypper) tool=zypper;  pkg=zypper ;;
+        pacstrap) tool=pacstrap; pkg=arch-install-scripts ;;
+        apk)    tool=apk;     pkg=apk ;;
+        *)
+            log_error "Unknown bootstrap family: $family"
+            return 2
+            ;;
+    esac
+    if command -v "$tool" >/dev/null 2>&1; then
+        return 0
+    fi
+    log_error "Bootstrap tool '$tool' is missing on this host (package: $pkg)."
+    log_error "Cross-family installs need the tool plus its repo config; the reliable path is a rescue of the same family."
+    return 2
+}
+
 # Эвристика rescue-окружения: корень на tmpfs или наличие маркеров провайдера.
 # Не ошибка: предупреждение, потому что запуск с live-ISO тоже легитимен.
 guard_rescue_hint() {

@@ -80,3 +80,18 @@ teardown() { rm -rf "$LRI_TMP"; }
     [ ! -e /etc/network/interfaces.lri-test ]
     grep -qP "^net\twrite\t/etc/network/interfaces\t" "$LRI_TMP/journal.tsv"
 }
+
+@test "preflight refuses a family whose bootstrap tool is missing" {
+    run env PATH=/nonexistent bash -c "source $LRI_ROOT/lib/log.sh; source $LRI_ROOT/lib/guard.sh; log_init /dev/null 0; guard_family_tools dnf"
+    [ "$status" -eq 2 ]
+    [[ "$output" == *"Bootstrap tool 'dnf' is missing"* ]]
+}
+
+@test "preflight passes for a family whose tool exists" {
+    run guard_family_tools debootstrap || true
+    if command -v debootstrap >/dev/null 2>&1; then
+        [ "$status" -eq 0 ]
+    else
+        [ "$status" -eq 2 ]
+    fi
+}

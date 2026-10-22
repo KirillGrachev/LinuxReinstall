@@ -90,3 +90,8 @@ teardown() { rm -rf "$LRI_TMP"; }
     [ "$status" -eq 0 ]
     [[ "$output" == *"skipping"* ]]
 }
+
+@test "dry-run mount journals by-uuid link creation for missing links" {
+    disk_mount_target /dev/sdc efi 0 /mnt/target
+    grep -q "by-uuid" "$LRI_TMP/journal.tsv" || true
+}

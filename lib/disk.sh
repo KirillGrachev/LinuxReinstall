@@ -117,6 +117,24 @@ disk_ensure_part_nodes() {
     done
 }
 
+# Без udev (контейнеры, минимальные rescue) нет ссылок /dev/disk/by-uuid,
+# и grub-probe падает в root=/dev/... вместо root=UUID=..., что ломает
+# загрузку при смене имени диска. Создаём ссылки сами по данным blkid.
+disk_ensure_uuid_links() {
+    local disk="$1"; shift
+    local num node uuid
+    for num in "$@"; do
+        [[ -n "$num" && "$num" != "-" ]] || continue
+        node="$(disk_part_name "$disk" "$num")"
+        uuid="$(blkid -s UUID -o value "$node" 2>/dev/null)" || continue
+        [[ -n "$uuid" ]] || continue
+        if [[ ! -e "/dev/disk/by-uuid/$uuid" ]]; then
+            run_exec disk mkdir -p /dev/disk/by-uuid
+            run_exec disk ln -sf "../../${node##*/}" "/dev/disk/by-uuid/$uuid"
+        fi
+    done
+}
+
 disk_mount_target() {
     local disk="$1" mode="$2" swap_mb="$3" target="$4"
     local nums boot_n swap_n root_n
@@ -130,6 +148,7 @@ disk_mount_target() {
     fi
     # debootstrap needs a usable /dev in the target and manages /proc and
     # /dev/pts on its own; pre-binding them breaks its second-stage cleanup.
+    disk_ensure_uuid_links "$disk" "$boot_n" "$swap_n" "$root_n"
     run_exec disk mkdir -p "$target/dev" || return 1
     run_exec disk mount --bind /dev "$target/dev" || return 1
 }

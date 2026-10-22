@@ -86,16 +86,30 @@ disk_ensure_part_nodes() {
     for num in "$@"; do
         [[ -n "$num" && "$num" != "-" ]] || continue
         name="$(disk_part_name "$disk" "$num")"
-        [[ -e "$name" ]] && continue
         base="${name##*/}"
         sys="/sys/class/block/$base/dev"
         if [[ ! -r "$sys" ]]; then
-            log_warn "Partition node $name is missing and sysfs has no entry; skipping."
+            if [[ -e "$name" ]]; then
+                log_warn "Partition node $name exists but sysfs has no entry; leaving it alone."
+            else
+                log_warn "Partition node $name is missing and sysfs has no entry; skipping."
+            fi
             continue
         fi
         devno="$(cat "$sys")"
         maj="${devno%%:*}"
         min="${devno##*:}"
+        if [[ -e "$name" ]]; then
+            # Узел мог остаться от прошлой разметки с другими номерами:
+            # сверяем major:minor с sysfs и пересоздаём при расхождении.
+            cur_maj="$(( 0x$(stat -c %t "$name") ))"
+            cur_min="$(( 0x$(stat -c %T "$name") ))"
+            if (( cur_maj == maj && cur_min == min )); then
+                continue
+            fi
+            log_warn "Stale node $name ($cur_maj:$cur_min, expected $maj:$min); recreating."
+            run_exec disk rm -f "$name" || return 1
+        fi
         run_exec disk mknod "$name" b "$maj" "$min" || return 1
     done
 }

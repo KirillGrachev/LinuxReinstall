@@ -8,6 +8,7 @@ source "$LRI_ROOT/lib/catalog.sh"
     [ "$LRI_CAT_FAMILY" = "debootstrap" ]
     [ "$LRI_CAT_RELEASE" = "bookworm" ]
     [[ "$LRI_CAT_MIRROR" == *"deb.debian.org"* ]]
+    [ "$LRI_CAT_KERNEL" = "linux-image-amd64" ]
 }
 
 @test "rocky and alma resolve to the dnf family" {
@@ -26,7 +27,7 @@ source "$LRI_ROOT/lib/catalog.sh"
 @test "every catalog family is one the bootstrap layer knows" {
     local row slug family release mirror
     for row in "${CATALOG[@]}"; do
-        read -r slug family release mirror <<< "$row"
+        read -r slug family release mirror kernel <<< "$row"
         case "$family" in
             debootstrap|dnf|zypper|pacstrap|apk|proxmox) ;;
             *) echo "unknown family $family for $slug"; return 1 ;;

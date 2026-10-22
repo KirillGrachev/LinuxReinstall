@@ -12,7 +12,7 @@ source "$LRI_ROOT/lib/catalog.sh"
 
 @test "every catalog family has a bootstrap backend" {
     local row slug family release mirror
-    while read -r slug family release mirror; do
+    while read -r slug family release mirror kernel; do
         [ -f "$LRI_ROOT/lib/bootstrap/$family.sh" ] || { echo "no backend for $family"; return 1; }
     done < <(printf "%s\n" "${CATALOG[@]}")
 }

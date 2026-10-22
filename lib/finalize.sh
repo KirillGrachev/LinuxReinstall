@@ -88,5 +88,9 @@ finalize_bootloader() {
     else
         run_exec finalize chroot "$target" "$grub" --target=i386-pc "$disk"
     fi
+    # Serial console in the kernel cmdline: headless machines and every
+    # boot verification (qemu -serial stdio) need a console to talk to.
+    run_exec finalize chroot "$target" sh -c \
+        "grep -q console=ttyS0 /etc/default/grub 2>/dev/null || printf 'GRUB_CMDLINE_LINUX=\"console=ttyS0,115200\"\n' >> /etc/default/grub"
     run_exec finalize chroot "$target" "$grubmk" -o "$conf"
 }

@@ -5,5 +5,5 @@ bootstrap_dnf() {
     local target="$1"
     run_exec bootstrap dnf -y --installroot="$target" \
         --releasever="$LRI_CAT_RELEASE" --setopt=install_weak_deps=False \
-        install @core openssh-server grub2 grub2-efi-x64 shim-x64 efi-filesystem
+        install @core openssh-server grub2 grub2-efi-x64 shim-x64 efi-filesystem "$LRI_CAT_KERNEL"
 }

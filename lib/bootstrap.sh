@@ -22,14 +22,14 @@ source "${LRI_ROOT:-.}/lib/bootstrap/apk.sh"
 source "${LRI_ROOT:-.}/lib/bootstrap/proxmox.sh"
 
 bootstrap_run() {
-    local family="$1" target="$2"
+    local family="$1" target="$2" mode="${3:-bios}"
     case "$family" in
-        debootstrap) bootstrap_debootstrap "$target" ;;
-        dnf)         bootstrap_dnf "$target" ;;
-        zypper)      bootstrap_zypper "$target" ;;
-        pacstrap)    bootstrap_pacstrap "$target" ;;
-        apk)         bootstrap_apk "$target" ;;
-        proxmox)     bootstrap_proxmox "$target" ;;
+        debootstrap) bootstrap_debootstrap "$target" "$mode" ;;
+        dnf)         bootstrap_dnf "$target" "$mode" ;;
+        zypper)      bootstrap_zypper "$target" "$mode" ;;
+        pacstrap)    bootstrap_pacstrap "$target" "$mode" ;;
+        apk)         bootstrap_apk "$target" "$mode" ;;
+        proxmox)     bootstrap_proxmox "$target" "$mode" ;;
         *)
             log_error "No bootstrap backend for family: $family"
             return 1

@@ -19,7 +19,7 @@ teardown() { rm -rf "$LRI_TMP"; }
 
 @test "debootstrap backend journals release and mirror" {
     catalog_resolve debian-12
-    bootstrap_run "$LRI_CAT_FAMILY" /mnt/target
+    bootstrap_run "$LRI_CAT_FAMILY" /mnt/target bios
     grep -q "debootstrap --arch=amd64" "$LRI_TMP/journal.tsv"
     grep -q "bookworm /mnt/target http://deb.debian.org/debian" "$LRI_TMP/journal.tsv"
     grep -q "linux-image-amd64" "$LRI_TMP/journal.tsv"
@@ -27,15 +27,15 @@ teardown() { rm -rf "$LRI_TMP"; }
 
 @test "dnf backend journals installroot and releasever" {
     catalog_resolve rocky-9
-    bootstrap_run "$LRI_CAT_FAMILY" /mnt/target
+    bootstrap_run "$LRI_CAT_FAMILY" /mnt/target bios
     grep -q -- "--installroot=/mnt/target" "$LRI_TMP/journal.tsv"
     grep -q -- "--releasever=9" "$LRI_TMP/journal.tsv"
-    grep -q "efi-filesystem kernel" "$LRI_TMP/journal.tsv"
+    grep -q "efi-filesystem efibootmgr kernel" "$LRI_TMP/journal.tsv"
 }
 
 @test "zypper backend adds the repo before installing" {
     catalog_resolve opensuse-leap-15.6
-    bootstrap_run "$LRI_CAT_FAMILY" /mnt/target
+    bootstrap_run "$LRI_CAT_FAMILY" /mnt/target bios
     first_addrepo=$(grep -n "addrepo" "$LRI_TMP/journal.tsv" | head -1 | cut -d: -f1)
     first_install=$(grep -n "install --auto-agree" "$LRI_TMP/journal.tsv" | head -1 | cut -d: -f1)
     [ -n "$first_addrepo" ] && [ -n "$first_install" ]
@@ -44,19 +44,19 @@ teardown() { rm -rf "$LRI_TMP"; }
 
 @test "pacstrap backend keeps keys and skips fstab" {
     catalog_resolve arch-linux
-    bootstrap_run "$LRI_CAT_FAMILY" /mnt/target
+    bootstrap_run "$LRI_CAT_FAMILY" /mnt/target bios
     grep -q "pacstrap -K -G -M /mnt/target base linux openssh grub" "$LRI_TMP/journal.tsv"
 }
 
 @test "apk backend pins the release repository" {
     catalog_resolve alpine-3.21
-    bootstrap_run "$LRI_CAT_FAMILY" /mnt/target
+    bootstrap_run "$LRI_CAT_FAMILY" /mnt/target bios
     grep -q -- "--repository http://dl-cdn.alpinelinux.org/alpine/v3.21/main" "$LRI_TMP/journal.tsv"
 }
 
 @test "proxmox backend bootstraps debian then drops the pve repo" {
     catalog_resolve proxmox-8
-    bootstrap_run "$LRI_CAT_FAMILY" /mnt/target
+    bootstrap_run "$LRI_CAT_FAMILY" /mnt/target bios
     grep -q "debootstrap --arch=amd64" "$LRI_TMP/journal.tsv"
     grep -qP "^bootstrap\twrite\t/mnt/target/etc/apt/sources.list.d/pve.list" "$LRI_TMP/journal.tsv"
 }
@@ -65,4 +65,11 @@ teardown() { rm -rf "$LRI_TMP"; }
     run bootstrap_run gentoo /mnt/target
     [ "$status" -eq 1 ]
     [[ "$output" == *"No bootstrap backend"* ]]
+}
+
+@test "debootstrap efi mode includes the efi grub package" {
+    catalog_resolve debian-12
+    bootstrap_run "$LRI_CAT_FAMILY" /mnt/target efi
+    grep -q "grub-efi-amd64" "$LRI_TMP/journal.tsv"
+    ! grep -q "openssh-server,grub2," "$LRI_TMP/journal.tsv"
 }

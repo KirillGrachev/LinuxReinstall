@@ -96,7 +96,7 @@ disk_ensure_part_nodes() {
         devno="$(cat "$sys")"
         maj="${devno%%:*}"
         min="${devno##*:}"
-        run_exec disk mknod -b "$name" "$maj" "$min"
+        run_exec disk mknod "$name" b "$maj" "$min" || return 1
     done
 }
 

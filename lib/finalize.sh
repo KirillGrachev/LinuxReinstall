@@ -52,13 +52,16 @@ finalize_hostname() {
 
 finalize_locale_tz() {
     local target="$1" family="$2" tz="$3"
+    # systemd-firstboot молча возвращает 1 в части chroot-окружений, поэтому
+    # локаль и часовой пояс ставятся детерминированно: файл и симлинк.
     if [[ "$family" == "apk" ]]; then
         run_write_file finalize "$target/etc/timezone" "$tz
 "
-        run_exec finalize chroot "$target" ln -sf "/usr/share/zoneinfo/$tz" /etc/localtime
-        return 0
+    else
+        run_write_file finalize "$target/etc/locale.conf" "LANG=C.UTF-8
+"
     fi
-    run_exec finalize chroot "$target" systemd-firstboot --force --timezone="$tz" --locale=C.UTF-8
+    run_exec finalize chroot "$target" ln -sf "/usr/share/zoneinfo/$tz" /etc/localtime
 }
 
 finalize_sshd() {

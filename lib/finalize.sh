@@ -80,6 +80,13 @@ finalize_initrd() {
             run_exec finalize chroot "$target" sh -c \
                 "sed -i 's/ autodetect / /' /etc/mkinitcpio.conf && mkinitcpio -P"
             ;;
+        apk)
+            # mkinitfs in a chroot probes no hardware and ships a minimal
+            # initramfs without disk drivers: rebuild with the storage
+            # features so the installed kernel finds its root.
+            run_exec finalize chroot "$target" sh -c \
+                "k=\$(find /lib/modules -mindepth 1 -maxdepth 1 -type d | head -n 1); k=\${k##*/}; mkinitfs -f base,ata,scsi,virtio -o /boot/initramfs-lts \$k"
+            ;;
     esac
     return 0
 }

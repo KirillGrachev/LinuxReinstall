@@ -83,6 +83,9 @@ CI runs shellcheck plus the suites on ubuntu-24.04.
   from any host, while dnf, zypper, pacstrap and apk need their own tool
   plus repo config, so the reliable path for those families is a rescue
   of the same family. The preflight guard refuses early otherwise.
+- Alpine installs pass every post-install check, but the stock initramfs
+  fails to mount the root under qemu emulation (device nodes absent in
+  the initramfs shell); boot on real hardware is not verified in v1.
 - Image-write installs (Talos, RouterOS) are phase 2: they dd a prepared
   image instead of bootstrapping packages. Windows is out of scope by design.
 

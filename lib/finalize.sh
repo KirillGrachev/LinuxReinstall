@@ -64,6 +64,19 @@ finalize_locale_tz() {
     run_exec finalize chroot "$target" ln -sf "/usr/share/zoneinfo/$tz" /etc/localtime
 }
 
+# zypper в installroot не запускает dracut из скриплетов ядра: он лишь
+# печатает просьбу. Без initrd меню grub не загружается, поэтому для
+# семейства zypper инициируем dracut сами и до генерации grub.cfg.
+finalize_initrd() {
+    local target="$1" family="$2"
+    case "$family" in
+        zypper)
+            run_exec finalize chroot "$target" dracut --force --regenerate-all
+            ;;
+    esac
+    return 0
+}
+
 finalize_sshd() {
     local target="$1" key="$2"
     run_exec finalize mkdir -p "$target/root/.ssh"

@@ -62,6 +62,7 @@ pipeline_run() {
     finalize_fstab "$target" "$LRI_DISK" "$mode" "$LRI_SWAP_MB" || exit 1
     finalize_hostname "$target" "${LRI_HOSTNAME:-$(hostname)}" || exit 1
     finalize_locale_tz "$target" "$LRI_CAT_FAMILY" "$LRI_TIMEZONE" || exit 1
+    finalize_initrd "$target" "$LRI_CAT_FAMILY" || exit 1
     finalize_sshd "$target" "$key" || exit 1
     finalize_serial_getty "$target" "$LRI_CAT_FAMILY" || exit 1
     finalize_bootloader "$target" "$LRI_DISK" "$mode" "$LRI_CAT_FAMILY" || exit 1

@@ -91,6 +91,26 @@ guard_family_tools() {
     return 2
 }
 
+
+# Базовый инструментарий разметки и ФС: без него прогон умирает кодом 127
+# посередине, а должен отказаться сразу и по-человечески.
+guard_core_tools() {
+    local tool missing=()
+    for tool in wipefs sfdisk partx mkfs.ext4 mkswap blkid mount umount mkdir mknod; do
+        command -v "$tool" >/dev/null 2>&1 || missing+=("$tool")
+    done
+    if (( ${#missing[@]} > 0 )); then
+        if (( LRI_DRY_RUN )); then
+            log_warn "Missing core tools: ${missing[*]}; dry-run continues."
+            log_journal guard tools-missing "${missing[*]}" "dry-run"
+            return 0
+        fi
+        log_error "Missing core tools: ${missing[*]} (usually util-linux, e2fsprogs, fdisk packages)."
+        return 2
+    fi
+    return 0
+}
+
 # Эвристика rescue-окружения: корень на tmpfs или наличие маркеров провайдера.
 # Не ошибка: предупреждение, потому что запуск с live-ISO тоже легитимен.
 guard_rescue_hint() {

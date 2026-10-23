@@ -46,6 +46,7 @@ pipeline_run() {
         key="$(cat "$LRI_SSH_KEY_FILE")"
     fi
     guard_family_tools "$LRI_CAT_FAMILY" || exit 2
+    guard_core_tools || exit 2
     mode="$(disk_detect_boot)"
     net_capture
     guard_confirm "Will wipe $LRI_DISK and install $LRI_CAT_SLUG ($LRI_CAT_FAMILY, $mode)." || {

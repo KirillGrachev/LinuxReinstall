@@ -13,6 +13,10 @@
 # Снимок текущего сетевого состояния. Любое поле можно переопределить
 # переменными окружения: тестам и оператору без парсинга живого стенда.
 net_capture() {
+    if ! command -v ip >/dev/null 2>&1; then
+        log_error "The ip tool is missing (package iproute/iproute2); cannot carry the network over."
+        return 2
+    fi
     LRI_NET_IFACE="${LRI_NET_IFACE:-$(ip route show default 2>/dev/null | awk "/default/ {print \$5; exit}")}"
     if [[ -z "$LRI_ADDRESS" ]]; then
         LRI_NET_ADDRESS="$(ip -4 addr show dev "$LRI_NET_IFACE" 2>/dev/null | awk "/inet / {print \$2; exit}")"

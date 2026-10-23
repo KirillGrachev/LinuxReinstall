@@ -96,3 +96,16 @@ teardown() { rm -rf "$LRI_TMP"; }
         [ "$status" -eq 2 ]
     fi
 }
+
+@test "core tools guard lists everything missing and refuses a real run" {
+    run env PATH="$LRI_TMP/empty" /bin/bash -c "mkdir -p $LRI_TMP/empty; source $LRI_ROOT/lib/log.sh; source $LRI_ROOT/lib/guard.sh; log_init /dev/null 0; LRI_DRY_RUN=0; guard_core_tools"
+    [ "$status" -eq 2 ]
+    [[ "$output" == *"Missing core tools"* ]]
+}
+
+@test "core tools guard warns in dry-run" {
+    mkdir -p "$LRI_TMP/empty"
+    run env PATH="$LRI_TMP/empty" /bin/bash -c "source $LRI_ROOT/lib/log.sh; source $LRI_ROOT/lib/guard.sh; log_init /dev/null 0; LRI_DRY_RUN=1; log_journal_init $LRI_TMP/j.tsv; guard_core_tools"
+    [ "$status" -eq 0 ]
+    [[ "$output" == *"dry-run continues"* ]]
+}

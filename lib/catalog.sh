@@ -23,8 +23,8 @@ CATALOG=(
     "rocky-9          dnf         9              http://download.rockylinux.org/rocky kernel"
     "alma-9           dnf         9              http://mirrors.almalinux.org/almalinux kernel"
     "centos-stream-10 dnf         10             http://mirror.stream.centos.org/centos-stream kernel"
-    "opensuse-leap-15.6 zypper     15.6          http://download.opensuse.org/distribution/leap kernel-default"
-    "opensuse-tumbleweed zypper    tumbleweed    http://download.opensuse.org/tumbleweed kernel-default"
+    "opensuse-leap-15.6 zypper     15.6          http://download.opensuse.org/distribution/leap/15.6/repo/oss kernel-default"
+    "opensuse-tumbleweed zypper    tumbleweed    http://download.opensuse.org/tumbleweed/repo/oss kernel-default"
     "arch-linux       pacstrap    rolling        http://geo.mirror.pkgbuild.com   linux"
     "alpine-3.21      apk         3.21           http://dl-cdn.alpinelinux.org/alpine linux-lts"
 )

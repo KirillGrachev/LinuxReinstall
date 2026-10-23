@@ -132,6 +132,6 @@ finalize_bootloader() {
     # headless machines and every boot verification (qemu -serial stdio)
     # need a console to talk to, including before the kernel starts.
     run_exec finalize chroot "$target" sh -c \
-        "grep -q console=ttyS0 /etc/default/grub 2>/dev/null || printf 'GRUB_CMDLINE_LINUX=\"console=ttyS0,115200\"\nGRUB_TERMINAL=serial\nGRUB_SERIAL_COMMAND=\"serial --unit=0 --speed=115200\"\n' >> /etc/default/grub" 
+        "grep -q console=ttyS0 /etc/default/grub 2>/dev/null || printf 'GRUB_CMDLINE_LINUX=\"console=ttyS0,115200 rootwait\"\nGRUB_TERMINAL=serial\nGRUB_SERIAL_COMMAND=\"serial --unit=0 --speed=115200\"\n' >> /etc/default/grub" 
     run_exec finalize chroot "$target" "$grubmk" -o "$conf"
 }

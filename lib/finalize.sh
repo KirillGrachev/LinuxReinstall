@@ -73,6 +73,13 @@ finalize_initrd() {
         zypper)
             run_exec finalize chroot "$target" dracut --force --regenerate-all
             ;;
+        pacstrap)
+            # autodetect slices the initramfs to the hardware it sees in the
+            # chroot, which on a rescue or container is the wrong machine;
+            # drop it so every block driver stays in.
+            run_exec finalize chroot "$target" sh -c \
+                "sed -i 's/ autodetect / /' /etc/mkinitcpio.conf && mkinitcpio -P"
+            ;;
     esac
     return 0
 }
@@ -121,9 +128,10 @@ finalize_bootloader() {
     else
         run_exec finalize chroot "$target" "$grub" --target=i386-pc "$disk"
     fi
-    # Serial console in the kernel cmdline: headless machines and every
-    # boot verification (qemu -serial stdio) need a console to talk to.
+    # Serial console in the kernel cmdline and a serial GRUB terminal:
+    # headless machines and every boot verification (qemu -serial stdio)
+    # need a console to talk to, including before the kernel starts.
     run_exec finalize chroot "$target" sh -c \
-        "grep -q console=ttyS0 /etc/default/grub 2>/dev/null || printf 'GRUB_CMDLINE_LINUX=\"console=ttyS0,115200\"\n' >> /etc/default/grub"
+        "grep -q console=ttyS0 /etc/default/grub 2>/dev/null || printf 'GRUB_CMDLINE_LINUX=\"console=ttyS0,115200\"\nGRUB_TERMINAL=serial\nGRUB_SERIAL_COMMAND=\"serial --unit=0 --speed=115200\"\n' >> /etc/default/grub" 
     run_exec finalize chroot "$target" "$grubmk" -o "$conf"
 }

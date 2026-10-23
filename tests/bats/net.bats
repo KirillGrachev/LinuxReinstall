@@ -49,6 +49,12 @@ teardown() { rm -rf "$LRI_TMP"; }
     grep -qP "^net\twrite\t/mnt/target/etc/systemd/network/10-lri.network" "$LRI_TMP/journal.tsv"
 }
 
+@test "apk family gets the interfaces format like debian" {
+    LRI_NETWORK=static LRI_NET_IFACE=eth0 LRI_NET_ADDRESS=192.0.2.10/24 LRI_NET_GATEWAY=192.0.2.1 LRI_NET_DNS=(1.1.1.1)
+    net_apply /mnt/target apk
+    grep -qP "^net\twrite\t/mnt/target/etc/network/interfaces" "$LRI_TMP/journal.tsv"
+}
+
 @test "capture honours environment overrides without touching the system" {
     LRI_NET_IFACE=eth7 LRI_ADDRESS=203.0.113.5/24 LRI_GATEWAY=203.0.113.1 LRI_DNS=(8.8.8.8)
     net_capture

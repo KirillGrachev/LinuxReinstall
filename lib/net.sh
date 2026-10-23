@@ -59,8 +59,11 @@ net_apply() {
     local target="$1" family="$2"
     local renderer path
     case "$family" in
-        debootstrap|proxmox) renderer=net_render_debian; path="$target/etc/network/interfaces" ;;
-        *)                   renderer=net_render_networkd; path="$target/etc/systemd/network/10-lri.network" ;;
+        # alpine ships ifupdown-ng, so the interfaces format fits it too
+        debootstrap|proxmox|apk)
+            renderer=net_render_debian; path="$target/etc/network/interfaces" ;;
+        *)
+            renderer=net_render_networkd; path="$target/etc/systemd/network/10-lri.network" ;;
     esac
     run_write_file net "$path" "$("$renderer" "$LRI_NETWORK" "$LRI_NET_IFACE" "$LRI_NET_ADDRESS" "$LRI_NET_GATEWAY" "${LRI_NET_DNS[@]:-}")"
 }

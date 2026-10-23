@@ -36,6 +36,7 @@ teardown() { rm -rf "$LRI_TMP"; }
 @test "zypper backend adds the repo before installing" {
     catalog_resolve opensuse-leap-15.6
     bootstrap_run "$LRI_CAT_FAMILY" /mnt/target bios
+    grep -q "rpm --root /mnt/target --initdb" "$LRI_TMP/journal.tsv"
     first_addrepo=$(grep -n "addrepo" "$LRI_TMP/journal.tsv" | head -1 | cut -d: -f1)
     first_install=$(grep -n "install --auto-agree" "$LRI_TMP/journal.tsv" | head -1 | cut -d: -f1)
     [ -n "$first_addrepo" ] && [ -n "$first_install" ]
@@ -45,7 +46,7 @@ teardown() { rm -rf "$LRI_TMP"; }
 @test "pacstrap backend keeps keys and skips fstab" {
     catalog_resolve arch-linux
     bootstrap_run "$LRI_CAT_FAMILY" /mnt/target bios
-    grep -q "pacstrap -K -G -M /mnt/target base linux openssh grub" "$LRI_TMP/journal.tsv"
+    grep -q "pacstrap -c /mnt/target base linux openssh grub" "$LRI_TMP/journal.tsv"
 }
 
 @test "apk backend pins the release repository" {

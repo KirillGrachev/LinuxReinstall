@@ -68,6 +68,10 @@ finalize_sshd() {
 "
     run_exec finalize chmod 700 "$target/root/.ssh"
     run_exec finalize chmod 600 "$target/root/.ssh/authorized_keys"
+    # Arch and openSUSE ship an sshd_config without an Include for the
+    # drop-in directory: prepend one, otherwise the hardening is dead text.
+    run_exec finalize chroot "$target" sh -c \
+        "grep -q 'Include /etc/ssh/sshd_config.d' /etc/ssh/sshd_config || sed -i '1i Include /etc/ssh/sshd_config.d/*.conf' /etc/ssh/sshd_config"
     run_write_file finalize "$target/etc/ssh/sshd_config.d/00-LinuxReinstall.conf" \
         "PermitRootLogin prohibit-password
 PasswordAuthentication no
